@@ -118,6 +118,10 @@ class DAPExtension extends Extension {
 					'Breadcrumbs' => $this->getDAPBreadcrumbs($maxDepth, $unlinked, $stopAtPageType, $showHidden)
 				];
 
+				if (!isset($data['Content'])) {
+					$additionalData['Content'] = '';
+				}
+
 				$data = array_merge($data, $additionalData);
 
 				$templates = [];
