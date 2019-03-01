@@ -16,9 +16,6 @@
   "support": {
 	"issues": "https://github.com/grasenhiller/silverstripe-dap/issues"
   },
-  "repositories": [
-	{"type": "composer", "url": "https://packages.gh-service.info/repo/private/"}
-  ],
   "require": {
 	"silverstripe/framework": "^4"
   },
