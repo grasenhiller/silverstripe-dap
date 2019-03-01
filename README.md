@@ -1,11 +1,19 @@
 # DataObject as Page
 
 Display a DataObject as page with own url, breadcrumbs and so on.
+You could either use the id of the object or an human readable url segment as link.
 
-## Configuration
+## Usage, example & requirements
+
+To help you get started, we want to display our ``BlogCategory`` object on to our blog holder with the ``BlogHolderController`` controller.
+The outcome should be this page: ``domain.tld/my-blog/kategorie/tolle-kategorie-1``
+
+Your object needs either an ``MenuTitle`` or ``Title`` db field. If both are available, the ``MenuTitle`` will be used for the url segment generation.
+Also you need to define a ``canView()`` function onto your object.
 
 #### 1. Extension
-Add the ``DataObjectLinkExtension`` to your DataObject and the ``DataObjectLinkExtension_Controller`` to your page controller where you want the item to be displayed.
+
+Add the ``DAPExtension`` to your controller where you want the object to be displayed and to the data object that should be displayed.
 
 ```yaml
 Grasenhiller\Intranet\Blog\Pages\BlogHolderController:
@@ -16,7 +24,7 @@ Grasenhiller\Intranet\Blog\Models\BlogCategory:
     - Grasenhiller\DAP\Extensions\Models\DAPExtension
 ```
 
-#### 2. config.yml
+#### 2. Configuration
 
 ```yaml
 Grasenhiller\Intranet\Blog\Pages\BlogHolderController:
@@ -25,6 +33,7 @@ Grasenhiller\Intranet\Blog\Pages\BlogHolderController:
 Grasenhiller\Intranet\Blog\Models\BlogCategory:
   dap_options:
     id_or_urlsegment: 'urlsegment'
+    controller_action: 'kategorie'
     template: 'MyCustomTemplate'
     breadcrumbs_max_depth: 20
     breadcrumbs_unlinked: false
@@ -32,40 +41,49 @@ Grasenhiller\Intranet\Blog\Models\BlogCategory:
     breadcrumbs_show_hidden: false
 ```
 
-You need to create a mapping for each URL Action. This action needs to be unique. So in this example, you can't create another one called "produkt"
-For each action you must define a class (DataObject classname), if you want to use the ID as url segment instead of the slug and you are able to submit a specific template.
-By default a template called "ClassNamePage" would be used. In this case "ItemPage"
+Inside your **controller** you need to define the name of the action you want to use and its value must be the class of the data objects you want to display.
+On the **data object** you need to define at least if you want to use the id or an urlsegment and the name of the controller action. **Optionally** you can define the following:
 
-**The URL Action must be unique!**
+- template (By default, the module will look for a template in the layout folder under your namespace. In our example in the folder ``Grasenhiller/Intranet/Blog/Models/Layout/BlogCategory.ss``)
+- breadcrumbs_max_depth
+- breadcrumbs_unlinked
+- breadcrumbs_stop_at_pagetype
+- breadcrumbs_show_hidden
 
 #### 3. DataObject
 
+Onto your data object you need to define which page it should use as "holder". This is required for the URLSegmentField and for the correct generation of the link.
+In our example the category has a relation called "Blog" to our ``BlogHolder``, so we will return this one.
+
 ```php
-  public function getHolderPage() {
-    return $this->Page();
-  }
+	public function getDAPHolder() {
+		return $this->Blog();
+	}
 ```
 
-If your DataObject is linked to a specific page, you could use this function to provide that page. It will be used in the Link() function. Otherwise the link would be the current page.
-
-You could also use those methods to modify the breadcrumbs per class
-- getBreadcrumbsMaxDepth()
-- getBreadcrumbsUnlinked()
-- getBreadcrumbsStopAtPageType()
-- getBreadcrumbsShowHidden()
-
 #### 4. dev/build
-Don't forget to dev/build after adding the extension to an DataObject
+
+Don't forget to dev/build after adding the extension to an data object
+
+## Methods and fields added
+
+Your data object has now an ``URLSegment`` field and a ``Link()`` and ``AbsoluteLink()`` method.
 
 ## Extending
-To use the extension points, you need to extend the class and apply your new class instead of the old one. Also your new class needs the same ``$allowed_actions`` and ``$url_handlers``
 
-# Todo: Own controller
+#### Controller
 
-    [0] => CollItemPage
-    [1] => Grasenhiller\Intranet\Blog\Models\Layout\BlogCategory
-    [2] => Page
+To update if an item is viewable or not
+
+``public function updateDAPShowAccess($item, &$access) {}``
+
+To modify the data object or add additional data to the page
+
+``public function updateDAPShowBeforeRender(&$data, $item, &$templates) {}``
     
-    $this->owner->extend('updateDAPShowAccess', $item, $access);
+#### DataObject
+
+To hook into the url segment creation
     
-    $this->owner->extend('updateDAPShowBeforeRender', $data, $item, $templates);
+``public function updateDAPGenerateURLSegment(&$urlSegment, &$baseString) {}``
+

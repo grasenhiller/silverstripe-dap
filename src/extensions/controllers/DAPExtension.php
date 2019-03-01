@@ -24,6 +24,11 @@ class DAPExtension extends Extension {
 		'//$Action!/$ID!' => 'dapShow',
 	];
 
+	/**
+	 * get the requested item
+	 *
+	 * @return mixed
+	 */
 	public function getDAPItem() {
 		$owner = $this->owner;
 		$r = $owner->request;
@@ -64,6 +69,11 @@ class DAPExtension extends Extension {
 		}
 	}
 
+	/**
+	 * show the found item if the request is for dap or redirect to intended action
+	 *
+	 * @return \SilverStripe\Control\HTTPResponse
+	 */
 	public function dapShow() {
 		$item = $this->getDAPItem();
 
@@ -137,6 +147,17 @@ class DAPExtension extends Extension {
 		}
 	}
 
+	/**
+	 * generate the breadcrumbs
+	 *
+	 * @param int  $maxDepth
+	 * @param bool $unlinked
+	 * @param bool $stopAtPageType
+	 * @param bool $showHidden
+	 * @param bool $page
+	 *
+	 * @return \SilverStripe\ORM\FieldType\DBHTMLText
+	 */
 	public function getDAPBreadcrumbs($maxDepth = 20, $unlinked = false, $stopAtPageType = false, $showHidden = false, $page = false) {
 		$pages = $this->owner->getDAPBreadcrumbItems($maxDepth, $stopAtPageType, $showHidden, $page);
 		$template = new SSViewer('BreadcrumbsTemplate');
@@ -147,6 +168,16 @@ class DAPExtension extends Extension {
 		])));
 	}
 
+	/**
+	 * get the breadcrumb items
+	 *
+	 * @param int  $maxDepth
+	 * @param bool $stopAtPageType
+	 * @param bool $showHidden
+	 * @param bool $page
+	 *
+	 * @return ArrayList
+	 */
 	public function getDAPBreadcrumbItems($maxDepth = 20, $stopAtPageType = false, $showHidden = false, $page = false) {
 		if (!$page) {
 			$page = $this->getDAPItem();
@@ -171,6 +202,13 @@ class DAPExtension extends Extension {
 		return ArrayList::create(array_reverse($pages));
 	}
 
+	/**
+	 * create an class or id name suitable for css
+	 *
+	 * @param $item
+	 *
+	 * @return string
+	 */
 	public static function get_classname_for_template($item) {
 		$expl = explode('\\', $item->ClassName);
 

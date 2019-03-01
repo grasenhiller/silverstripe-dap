@@ -2,9 +2,9 @@
 
 namespace Grasenhiller\DAP\Extensions\Models;
 
+use InvalidArgumentException;
 use SilverStripe\CMS\Forms\SiteTreeURLSegmentField;
 use SilverStripe\Control\Director;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\View\Parsers\URLSegmentFilter;
@@ -19,96 +19,136 @@ class DAPExtension extends DataExtension {
 		parent::onBeforeWrite();
 
 		$owner = $this->owner;
+		$itemDAPConfig = $owner->config()->get('dap_options');
 
-		if (
-			(!$owner->URLSegment && $owner->Title)
-			|| (isset($owner->getConfiguration()['id_instead_of_slug']) && $owner->getConfiguration()['id_instead_of_slug'] && $owner->isChanged('Title', 2))
-		) {
-			$owner->URLSegment = $owner->generateURLSegment($owner->Title);
-		} else if ($owner->isChanged('URLSegment', 2)) {
-			$owner->URLSegment = $owner->generateURLSegment($owner->URLSegment);
-		}
+		if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment') {
+			if (
+				!$owner->URLSegment
+				|| $owner->isChanged('Title', 2)
+			) {
+				if (isset($owner->config()->get('db')['MenuTitle'])) {
+					$stringForURLSegment = $owner->MenuTitle;
+				} else {
+					$stringForURLSegment = $owner->Title;
+				}
 
-		$count = 2;
-
-		while(!$owner->validURLSegment()) {
-			$owner->URLSegment = preg_replace('/-[0-9]+$/', null, $owner->URLSegment) . '-' . $count;
-			$count++;
+				$owner->URLSegment = $owner->dapGenerateURLSegment($stringForURLSegment);
+			} else if ($owner->isChanged('URLSegment', 2)) {
+				$owner->URLSegment = $owner->dapGenerateURLSegment($owner->URLSegment);
+			}
 		}
 	}
 
-	public function validURLSegment() {
+	/**
+	 * generate the urlsegment
+	 *
+	 * @param $baseString
+	 *
+	 * @return mixed
+	 */
+	public function dapGenerateURLSegment($baseString) {
+		$owner = $this->owner;
+		$filter = URLSegmentFilter::create();
+		$urlSegment = $filter->filter($baseString);
+
+		$owner->extend('updateDAPGenerateURLSegment', $urlSegment, $baseString);
+
+		return $owner->dapValidateURLSegment($urlSegment);
+	}
+
+	/**
+	 * validate the given urlsegment and if invalid return a new and valid one
+	 *
+	 * @param     $urlSegment
+	 * @param int $count
+	 *
+	 * @return string
+	 */
+	public function dapValidateURLSegment($urlSegment, $count = 2) {
 		$owner = $this->owner;
 		$class = $owner->ClassName;
 
 		$existingItem = $class::get()
-			->filter('URLSegment', $owner->URLSegment)
 			->exclude('ID', $owner->ID)
-			->first();
+			->find('URLSegment', $urlSegment);
 
-		return !($existingItem);
+		if ($existingItem) {
+			$urlSegment = preg_replace('/-[0-9]+$/', null, $urlSegment) . '-' . $count;
+			$count++;
+			return $owner->dapValidateURLSegment($urlSegment, $count);
+		}
+
+		return $urlSegment;
 	}
 
-	public function generateURLSegment($title) {
-		$owner = $this->owner;
-		$filter = URLSegmentFilter::create();
-		$t = $filter->filter($title);
-
-		if (!$t || $t == '-' || $t == '-1') $t = $owner->getConfiguration()['action'] . '-' . $owner->ID;
-
-		$owner->extend('updateURLSegment', $t, $title);
-
-		return $t;
-	}
-
-	public function Link() {
+	public function Link($action = null) {
 		$owner = $this->owner;
 
-		if ($owner->hasMethod('getHolderPage')) {
-			$holder = $owner->getHolderPage();
-		} else {
-			$holder = false;
-		}
+		if ($owner->hasMethod('getDAPHolder')) {
+			$holder = $owner->getDAPHolder();
 
-		if ($holder) {
-			$page = $holder;
-		} else {
-			$page = Director::get_current_page();
-		}
+			$itemDAPConfig = $owner->config()->get('dap_options');
 
-		$config = $this->owner->getConfiguration();
-
-		if (!isset($config['id_instead_of_slug']) || (isset($config['id_instead_of_slug']) && !$config['id_instead_of_slug'])) {
-			$segment = $owner->URLSegment;
-		} else {
-			$segment = $owner->ID;
-		}
-
-		return $page->Link($owner->getConfiguration()['action'] . '/' . $segment);
-	}
-
-	public function AbsoluteLink() {
-		return Director::absoluteURL($this->Link());
-	}
-
-	public function updateCMSFields(FieldList $fields) {
-		if (!$this->owner->getConfiguration()['id_instead_of_slug']) {
-			$fields->insertBefore(
-				SiteTreeURLSegmentField::create('URLSegment', 'URL')
-					->setURLPrefix($this->owner->getConfiguration()['action'] . '/')
-				, '');
-		}
-	}
-
-	public function getConfiguration() {
-		$configs = Config::inst()->get('DataObjectLinkMapping', 'mappings');
-
-		foreach ($configs as $action => $config) {
-			if ($config['class'] == $this->owner->ClassName) {
-				$match = $configs[$action];
-				$match['action'] = $action;
-				return $match;
+			if($itemDAPConfig['id_or_urlsegment'] == 'urlsegment') {
+				$segment = $owner->URLSegment;
+			} else {
+				$segment = $owner->ID;
 			}
+
+			return $holder->Link($itemDAPConfig['controller_action'] . '/' . $segment . '/' . $action);
+		}
+	}
+
+	/**
+	 * @param null $action
+	 *
+	 * @return string
+	 */
+	public function AbsoluteLink($action = null) {
+		return Director::absoluteURL($this->Link($action));
+	}
+
+	/**
+	 * @param FieldList $fields
+	 */
+	public function updateCMSFields(FieldList $fields) {
+		$owner = $this->owner;
+		$owner->validateDAPSettings();
+		$itemDAPConfig = $owner->config()->get('dap_options');
+
+		if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment') {
+			$after = '';
+
+			if ($fields->dataFieldByName('MenuTitle')) {
+				$after = 'MenuTitle';
+			} else if ($fields->dataFieldByName('Title')) {
+				$after = 'Title';
+			}
+
+			$fields->insertAfter(
+				$after,
+				SiteTreeURLSegmentField::create('URLSegment', 'URL-Segment')
+					->setURLPrefix($owner->getDAPHolder()->Link() . $itemDAPConfig['controller_action'] . '/')
+			);
+		}
+	}
+
+	/**
+	 * a little bit of validation to help the developer
+	 */
+	public function validateDAPSettings() {
+		$owner = $this->owner;
+		$itemDAPConfig = $owner->config()->get('dap_options');
+		$itemClass = $owner->ClassName;
+
+		if (!$itemDAPConfig) {
+			throw new InvalidArgumentException('Please add DAP configuration for your data object "' . $itemClass . '"', E_USER_ERROR);
+		} else if (!isset($itemDAPConfig['id_or_urlsegment']) || !isset($itemDAPConfig['controller_action'])) {
+			throw new InvalidArgumentException('Please add at least the "id_or_urlsegment" and "controller_action" option for your data object "' . $itemClass . '"', E_USER_ERROR);
+		} else if ($itemDAPConfig['id_or_urlsegment'] != 'urlsegment' && $itemDAPConfig['id_or_urlsegment'] != 'id') {
+			throw new InvalidArgumentException('Please define "urlsegment" or "id" for the option "id_or_urlsegment" of your data object "' . $itemClass . '"', E_USER_ERROR);
+		}  else if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment' && !isset($owner->config()->get('db')['Title']) && !isset($owner->config()->get('db')['MenuTitle'])) {
+			throw new InvalidArgumentException('You need an db field called "MenuTitle" or "Title" in order to create an urlsegment on your ' . $itemClass . '" class', E_USER_ERROR);
 		}
 	}
 }
