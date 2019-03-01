@@ -44,7 +44,7 @@ Grasenhiller\Intranet\Blog\Models\BlogCategory:
 Inside your **controller** you need to define the name of the action you want to use and its value must be the class of the data objects you want to display.
 On the **data object** you need to define at least if you want to use the id or an urlsegment and the name of the controller action. **Optionally** you can define the following:
 
-- template (By default, the module will look for a template in the layout folder under your namespace. In our example in the folder ``Grasenhiller/Intranet/Blog/Models/Layout/BlogCategory.ss``)
+- template
 - breadcrumbs_max_depth
 - breadcrumbs_unlinked
 - breadcrumbs_stop_at_pagetype
@@ -64,6 +64,12 @@ In our example the category has a relation called "Blog" to our ``BlogHolder``, 
 #### 4. dev/build
 
 Don't forget to dev/build after adding the extension to an data object
+
+#### 5. Templating
+
+You can define a custom template via yml. Otherwise the module will look for a template in the layout folder under your namespace. In our example in the folder ``Grasenhiller/Intranet/Blog/Models/Layout/BlogCategory.ss``.
+
+DB Fields are accessible like regular. To get relations and other methods use ``$DAPItem.MyMethod``.
 
 ## Methods and fields added
 
