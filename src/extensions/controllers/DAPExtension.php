@@ -2,6 +2,8 @@
 
 namespace Grasenhiller\DAP\Extensions\Controllers;
 
+use InvalidArgumentException;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
 use SilverStripe\ORM\ArrayList;
@@ -11,120 +13,143 @@ use SilverStripe\View\SSViewer;
 
 class DAPExtension extends Extension {
 
-	private $config;
+	protected $dap_config;
+	protected $dap_action;
 
 	private static $allowed_actions = [
-		'show'
+		'dapShow'
 	];
 
 	private static $url_handlers = [
-		'//$Action!/$ID!' => 'show',
+		'//$Action!/$ID!' => 'dapShow',
 	];
 
-	public function getItem() {
-		$r = $this->owner->request;
-		$action = $r->allParams()['Action'];
-		$url = $r->allParams()['ID'];
+	public function getDAPItem() {
+		$owner = $this->owner;
+		$r = $owner->request;
+		$action = $r->param('Action');
+		$url = $r->param('ID');
+
+		$this->dap_action = $action;
 
 		if ($action && $url) {
-			$config = Config::inst()->get('DataObjectLinkMapping', 'mappings');
+			$dapActions = $owner->config()->get('dap_actions');
 
-			if ($config && isset($config[$action])) {
-				$config = $config[$action];
+			if (is_array($dapActions) && isset($dapActions[$action])) {
+				$itemClass = $dapActions[$action];
+				$itemDAPConfig = Config::inst()->get($itemClass, 'dap_options');
 
-				if ($config) {
-					$this->config = $config;
+				if (!$itemDAPConfig) {
+					throw new InvalidArgumentException('Please add DAP configuration for your data object "' . $itemClass . '"', E_USER_ERROR);
+				} else if (!isset($itemDAPConfig['id_or_urlsegment'])) {
+					throw new InvalidArgumentException('Please add at least the "id_or_urlsegment" option for your data object "' . $itemClass . '"', E_USER_ERROR);
+				} else if ($itemDAPConfig['id_or_urlsegment'] != 'urlsegment' && $itemDAPConfig['id_or_urlsegment'] != 'id') {
+					throw new InvalidArgumentException('Please define "urlsegment" or "id" for the option "id_or_urlsegment" of your data object "' . $itemClass . '"', E_USER_ERROR);
+				}
 
-					if (!isset($config['id_instead_of_slug']) || (isset($config['id_instead_of_slug']) && !$config['id_instead_of_slug'])) {
-						$searchField ='URLSegment';
-					} else {
-						$searchField ='ID';
-					}
+				$this->dap_config = $itemDAPConfig;
 
-					$item = $config['class']::get()->find($searchField, $url);
+				if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment') {
+					$field ='URLSegment';
+				} else {
+					$field ='ID';
+				}
 
-					if ($item) {
-						return $item;
-					}
+				$item = $itemClass::get()->find($field, $url);
+
+				if ($item) {
+					return $item;
 				}
 			}
 		}
 	}
 
-	public function show() {
-		$item = $this->getItem();
+	public function dapShow() {
+		$item = $this->getDAPItem();
 
 		if ($item) {
 			$access = $item->canView();
-			$this->owner->extend('updateShowAccess', $item, $access);
+			$this->owner->extend('updateDAPShowAccess', $item, $access);
+			$dapConfig = $this->dap_config;
 
 			if ($access) {
 				$parent = Director::get_current_page();
 
-				if ($item->hasMethod('getBreadcrumbsMaxDepth')) {
-					$maxDepth = $item->getBreadcrumbsMaxDepth();
+				if (isset($dapConfig['breadcrumbs_max_depth'])) {
+					$maxDepth = $dapConfig['breadcrumbs_max_depth'];
 				} else {
 					$maxDepth = 20;
 				}
 
-				if ($item->hasMethod('getBreadcrumbsUnlinked')) {
-					$unlinked = $item->getBreadcrumbsUnlinked();
+				if (isset($dapConfig['breadcrumbs_unlinked'])) {
+					$unlinked = $dapConfig['breadcrumbs_unlinked'];
 				} else {
 					$unlinked = false;
 				}
 
-				if ($item->hasMethod('getBreadcrumbsStopAtPageType')) {
-					$stopAtPageType = $item->getBreadcrumbsStopAtPageType();
+				if (isset($dapConfig['breadcrumbs_stop_at_pagetype'])) {
+					$stopAtPageType = $dapConfig['breadcrumbs_stop_at_pagetype'];
 				} else {
 					$stopAtPageType = false;
 				}
 
-				if ($item->hasMethod('getBreadcrumbsShowHidden')) {
-					$showHidden = $item->getBreadcrumbsShowHidden();
+				if (isset($dapConfig['breadcrumbs_show_hidden'])) {
+					$showHidden = $dapConfig['breadcrumbs_show_hidden'];
 				} else {
 					$showHidden = false;
 				}
 
-				$data = [
-					'Title' => $item->Title,
+				$data = $item->getQueriedDatabaseFields();
+
+				$additionalData = [
 					'Parent' => $parent,
-					'ClassName' => $item->ClassName,
-					'Item' => $item,
-					'Breadcrumbs' => $this->DataObjectBreadcrumbs($maxDepth, $unlinked, $stopAtPageType, $showHidden)
+					'ClassNameForTemplate' => self::get_classname_for_template($item),
+					'DAPItem' => $item,
+					'Breadcrumbs' => $this->getDAPBreadcrumbs($maxDepth, $unlinked, $stopAtPageType, $showHidden)
 				];
 
-				$pageTemplate = false;
+				$data = array_merge($data, $additionalData);
 
-				if (isset($this->config['template']) && $this->config['template']) {
-					$pageTemplate = $this->config['template'];
+				$templates = [];
+
+				if (isset($dapConfig['template']) && $dapConfig['template']) {
+					$templates[] = $dapConfig['template'];
 				}
 
-				$this->owner->extend('updateShowData', $data, $item, $pageTemplate);
+				$templates[] = $item->ClassName;
+				$templates[] = 'Page';
+
+				$this->owner->extend('updateDAPShowBeforeRender', $data, $item, $templates);
 
 				return $this->owner
 					->customise($data)
-					->renderWith([$pageTemplate, $item->ClassName . 'Page', 'Page']);
+					->renderWith($templates);
 			} else {
 				return Security::permissionFailure();
 			}
+		} else {
+			if ($this->owner->hasMethod($this->dap_action)) {
+				$action = $this->dap_action;
+				return $this->owner->$action();
+			} else {
+				return $this->owner->httpError(404);
+			}
 		}
-
-		return $this->owner->httpError(404);
 	}
 
-	public function DataObjectBreadcrumbs($maxDepth = 20, $unlinked = false, $stopAtPageType = false, $showHidden = false, $page = false) {
-		$pages = $this->getDataObjectBreadcrumbItems($maxDepth, $stopAtPageType, $showHidden, $page);
+	public function getDAPBreadcrumbs($maxDepth = 20, $unlinked = false, $stopAtPageType = false, $showHidden = false, $page = false) {
+		$pages = $this->owner->getDAPBreadcrumbItems($maxDepth, $stopAtPageType, $showHidden, $page);
 		$template = new SSViewer('BreadcrumbsTemplate');
 
 		return $template->process($this->owner->customise(ArrayData::create([
-			"Pages" => $pages,
-			"Unlinked" => $unlinked
+			'Pages' => $pages,
+			'Unlinked' => $unlinked
 		])));
 	}
 
-	public function getDataObjectBreadcrumbItems($maxDepth = 20, $stopAtPageType = false, $showHidden = false, $page = false) {
+	public function getDAPBreadcrumbItems($maxDepth = 20, $stopAtPageType = false, $showHidden = false, $page = false) {
 		if (!$page) {
-			$page = $this->getItem();
+			$page = $this->getDAPItem();
 		}
 
 		$page->ShowInMenus = true;
@@ -144,5 +169,15 @@ class DAPExtension extends Extension {
 		}
 
 		return ArrayList::create(array_reverse($pages));
+	}
+
+	public static function get_classname_for_template($item) {
+		$expl = explode('\\', $item->ClassName);
+
+		if (count($expl) >= 2) {
+			return $expl[0] . '_' . $expl[count($expl) - 1];
+		} else {
+			return $expl[0];
+		}
 	}
 }

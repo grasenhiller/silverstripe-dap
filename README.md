@@ -8,23 +8,28 @@ Display a DataObject as page with own url, breadcrumbs and so on.
 Add the ``DataObjectLinkExtension`` to your DataObject and the ``DataObjectLinkExtension_Controller`` to your page controller where you want the item to be displayed.
 
 ```yaml
-DataObjectClass:
-  extensions:
-    - Grasenhiller\DAP\Extensions\Models\DAPExtension
-ControllerClass:
+Grasenhiller\Intranet\Blog\Pages\BlogHolderController:
   extensions:
     - Grasenhiller\DAP\Extensions\Controllers\DAPExtension
+Grasenhiller\Intranet\Blog\Models\BlogCategory:
+  extensions:
+    - Grasenhiller\DAP\Extensions\Models\DAPExtension
 ```
 
 #### 2. config.yml
 
 ```yaml
-DataObjectLinkMapping:
-	mappings:
-	  produkt: 
-	    class: 'Item'
-	    id_instead_of_slug: false
-	    template: 'CoolItemPage'
+Grasenhiller\Intranet\Blog\Pages\BlogHolderController:
+  dap_actions:
+    kategorie: 'Grasenhiller\Intranet\Blog\Models\BlogCategory'
+Grasenhiller\Intranet\Blog\Models\BlogCategory:
+  dap_options:
+    id_or_urlsegment: 'urlsegment'
+    template: 'MyCustomTemplate'
+    breadcrumbs_max_depth: 20
+    breadcrumbs_unlinked: false
+    breadcrumbs_stop_at_pagetype: false # classname or false
+    breadcrumbs_show_hidden: false
 ```
 
 You need to create a mapping for each URL Action. This action needs to be unique. So in this example, you can't create another one called "produkt"
@@ -56,3 +61,11 @@ Don't forget to dev/build after adding the extension to an DataObject
 To use the extension points, you need to extend the class and apply your new class instead of the old one. Also your new class needs the same ``$allowed_actions`` and ``$url_handlers``
 
 # Todo: Own controller
+
+    [0] => CollItemPage
+    [1] => Grasenhiller\Intranet\Blog\Models\Layout\BlogCategory
+    [2] => Page
+    
+    $this->owner->extend('updateDAPShowAccess', $item, $access);
+    
+    $this->owner->extend('updateDAPShowBeforeRender', $data, $item, $templates);
