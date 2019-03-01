@@ -67,7 +67,7 @@ Don't forget to dev/build after adding the extension to an data object
 
 ## Methods and fields added
 
-Your data object has now an ``URLSegment`` field and a ``Link()`` and ``AbsoluteLink()`` method.
+Your data object has now an ``URLSegment`` field and a ``Link()``, ``AbsoluteLink()`` and ``DAPLinkingMode()`` method.
 
 ## Extending
 

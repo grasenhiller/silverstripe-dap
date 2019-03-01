@@ -4,6 +4,7 @@ namespace Grasenhiller\DAP\Extensions\Models;
 
 use InvalidArgumentException;
 use SilverStripe\CMS\Forms\SiteTreeURLSegmentField;
+use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
@@ -150,5 +151,30 @@ class DAPExtension extends DataExtension {
 		}  else if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment' && !isset($owner->config()->get('db')['Title']) && !isset($owner->config()->get('db')['MenuTitle'])) {
 			throw new InvalidArgumentException('You need an db field called "MenuTitle" or "Title" in order to create an urlsegment on your ' . $itemClass . '" class', E_USER_ERROR);
 		}
+	}
+
+	public function DAPLinkingMode() {
+		$owner = $this->owner;
+		$dapConfig = $owner->config()->get('dap_options');
+
+		if ($dapConfig && isset($dapConfig['id_or_urlsegment']) && isset($dapConfig['controller_action'])) {
+			$ctrl = Controller::curr();
+			$r = $ctrl->getRequest();
+			$action = $ctrl->getAction();
+
+			if ($action == 'dapShow' && $dapConfig['controller_action'] == $r->param('Action')) {
+				if ($dapConfig['id_or_urlsegment'] == 'urlsegment') {
+					$field = 'URLSegment';
+				} else if ($dapConfig['id_or_urlsegment'] == 'id') {
+					$field = 'ID';
+				}
+
+				if ($owner->$field == $r->param('ID')) {
+					return 'current';
+				}
+			}
+		}
+
+		return 'link';
 	}
 }
