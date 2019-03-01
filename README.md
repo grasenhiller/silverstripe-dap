@@ -1,17 +1,19 @@
-# DataObject Link Extension
-Give DataObjects an own url and a page to display them on.
+# DataObject as Page
+
+Display a DataObject as page with own url, breadcrumbs and so on.
 
 ## Configuration
+
 #### 1. Extension
 Add the ``DataObjectLinkExtension`` to your DataObject and the ``DataObjectLinkExtension_Controller`` to your page controller where you want the item to be displayed.
 
 ```yaml
-Item:
+DataObjectClass:
   extensions:
-    - DataObjectLinkExtension
-ItemCategoryPage_Controller:
+    - Grasenhiller\DAP\Extensions\Models\DAPExtension
+ControllerClass:
   extensions:
-    - DataObjectLinkExtension_Controller
+    - Grasenhiller\DAP\Extensions\Controllers\DAPExtension
 ```
 
 #### 2. config.yml
@@ -52,3 +54,5 @@ Don't forget to dev/build after adding the extension to an DataObject
 
 ## Extending
 To use the extension points, you need to extend the class and apply your new class instead of the old one. Also your new class needs the same ``$allowed_actions`` and ``$url_handlers``
+
+# Todo: Own controller
