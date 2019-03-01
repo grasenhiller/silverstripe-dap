@@ -1,0 +1,35 @@
+{
+  "name": "grasenhiller/silverstripe-dap",
+  "description": "Display DataObjects as Pages",
+  "homepage": "https://github.com/grasenhiller/silverstripe-dap",
+  "keywords": [
+	"silverstripe",
+	"dataobject",
+	"page",
+	"dataobject as page"
+  ],
+  "license": "BSD-3-Clause",
+  "type": "silverstripe-vendormodule",
+  "authors": [
+	{"name": "Benedikt Hofstaetter", "email": "bh@grasenhiller.de"}
+  ],
+  "support": {
+	"issues": "https://github.com/grasenhiller/silverstripe-dap/issues"
+  },
+  "repositories": [
+	{"type": "composer", "url": "https://packages.gh-service.info/repo/private/"}
+  ],
+  "require": {
+	"silverstripe/framework": "^4"
+  },
+  "autoload": {
+	"psr-4": {
+	  "Grasenhiller\\DAP\\": "src/"
+	}
+  },
+  "extra": {
+	"installer-name": "silverstripe-dap"
+  }
+}
+
+

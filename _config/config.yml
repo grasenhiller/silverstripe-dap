@@ -1,0 +1,8 @@
+---
+Name: dap
+Before: 'app'
+---
+Grasenhiller\DAP\Models\MyModel:
+  include_default_js: true
+  include_vendor_js: true
+  include_vendor_css: true
