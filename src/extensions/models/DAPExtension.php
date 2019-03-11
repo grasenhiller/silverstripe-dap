@@ -129,7 +129,7 @@ class DAPExtension extends DataExtension {
 			$prefix = '';
 			
 			if ($owner->getDAPHolder() && $owner->getDAPHolder()->exists()) {
-				$prefix = $owner->getDAPHolder()->Link() . $itemDAPConfig['controller_action'] . '/'
+				$prefix = $owner->getDAPHolder()->Link() . $itemDAPConfig['controller_action'] . '/';
 			}
 			
 			$fields->insertAfter(
