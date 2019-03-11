@@ -126,10 +126,16 @@ class DAPExtension extends DataExtension {
 				$after = 'Title';
 			}
 
+			$prefix = '';
+			
+			if ($owner->getDAPHolder() && $owner->getDAPHolder()->exists()) {
+				$prefix = $owner->getDAPHolder()->Link() . $itemDAPConfig['controller_action'] . '/'
+			}
+			
 			$fields->insertAfter(
 				$after,
 				SiteTreeURLSegmentField::create('URLSegment', 'URL-Segment')
-					->setURLPrefix($owner->getDAPHolder()->Link() . $itemDAPConfig['controller_action'] . '/')
+					->setURLPrefix($prefix)
 			);
 		}
 	}
