@@ -63,6 +63,14 @@ In our example the category has a relation called "Blog" to our ``BlogHolder``, 
 	}
 ```
 
+Also you can or have to (if your object has no 'Title' db field) define a method to overwrite/set the page title
+
+```php
+	public function getDAPPageTitle() {
+		return $this->CustomFieldOrFunctionForPageTitleBlabla();
+	}
+```
+
 #### 4. dev/build
 
 Don't forget to dev/build after adding the extension to an data object
