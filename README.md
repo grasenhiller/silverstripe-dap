@@ -32,7 +32,7 @@ Grasenhiller\Intranet\Blog\Pages\BlogHolderController:
     kategorie: 'Grasenhiller\Intranet\Blog\Models\BlogCategory'
 Grasenhiller\Intranet\Blog\Models\BlogCategory:
   dap_options:
-  	field_for_urlsegment: 'CustomTitle'
+    field_for_urlsegment: 'CustomTitle'
     id_or_urlsegment: 'urlsegment'
     controller_action: 'kategorie'
     template: 'MyCustomTemplate'
