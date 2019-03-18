@@ -15,6 +15,7 @@ class DAPExtension extends Extension {
 
 	protected $dap_config;
 	protected $dap_action;
+	protected $skip_dap_check = false;
 
 	private static $allowed_actions = [
 		'dapShow'
@@ -23,6 +24,21 @@ class DAPExtension extends Extension {
 	private static $url_handlers = [
 		'//$Action!/$ID!' => 'dapShow',
 	];
+
+	public function onBeforeInit() {
+		$owner = $this->owner;
+		$r = $owner->request;
+
+		if (!$r->param('ID')) {
+			$dapActions = $owner->config()->get('dap_actions');
+			$urlSegment = $r->param('URLSegment');
+
+			if (isset($dapActions[$urlSegment])) {
+				$owner->skip_dap_check = true;
+				$owner->config()->update('url_handlers', ['//$Action!' => 'dapShow']);
+			}
+		}
+	}
 
 	/**
 	 * get the requested item
@@ -35,10 +51,16 @@ class DAPExtension extends Extension {
 		$action = $r->param('Action');
 		$url = $r->param('ID');
 
-		$this->dap_action = $action;
-
-		if ($action && $url) {
+		if (
+			($action && $url)
+			|| ($action && $owner->skip_dap_check)
+		) {
 			$dapActions = $owner->config()->get('dap_actions');
+
+			if ($owner->skip_dap_check) {
+				$url = $action;
+				$action = $r->param('URLSegment');
+			}
 
 			if (is_array($dapActions) && isset($dapActions[$action])) {
 				$itemClass = $dapActions[$action];
