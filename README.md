@@ -32,6 +32,7 @@ Grasenhiller\Intranet\Blog\Pages\BlogHolderController:
     kategorie: 'Grasenhiller\Intranet\Blog\Models\BlogCategory'
 Grasenhiller\Intranet\Blog\Models\BlogCategory:
   dap_options:
+  	field_for_urlsegment: 'CustomTitle'
     id_or_urlsegment: 'urlsegment'
     controller_action: 'kategorie'
     template: 'MyCustomTemplate'
@@ -49,6 +50,7 @@ On the **data object** you need to define at least if you want to use the id or 
 - breadcrumbs_unlinked
 - breadcrumbs_stop_at_pagetype
 - breadcrumbs_show_hidden
+- field_for_urlsegment
 
 #### 3. DataObject
 

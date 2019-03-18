@@ -22,18 +22,20 @@ class DAPExtension extends DataExtension {
 		$owner = $this->owner;
 		$itemDAPConfig = $owner->config()->get('dap_options');
 
+		if (isset($itemDAPConfig['field_for_urlsegment'])) {
+			$fieldForURLSegment = $itemDAPConfig['field_for_urlsegment'];
+		} else if (isset($owner->config()->get('db')['MenuTitle'])) {
+			$fieldForURLSegment = 'MenuTitle';
+		} else {
+			$fieldForURLSegment = 'Title';
+		}
+
 		if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment') {
 			if (
 				!$owner->URLSegment
-				|| $owner->isChanged('Title', 2)
+				|| $owner->isChanged($fieldForURLSegment, 2)
 			) {
-				if (isset($owner->config()->get('db')['MenuTitle'])) {
-					$stringForURLSegment = $owner->MenuTitle;
-				} else {
-					$stringForURLSegment = $owner->Title;
-				}
-
-				$owner->URLSegment = $owner->dapGenerateURLSegment($stringForURLSegment);
+				$owner->URLSegment = $owner->dapGenerateURLSegment($owner->$fieldForURLSegment);
 			} else if ($owner->isChanged('URLSegment', 2)) {
 				$owner->URLSegment = $owner->dapGenerateURLSegment($owner->URLSegment);
 			}
@@ -120,7 +122,9 @@ class DAPExtension extends DataExtension {
 		if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment') {
 			$after = '';
 
-			if ($fields->dataFieldByName('MenuTitle')) {
+			if (isset($itemDAPConfig['field_for_urlsegment'])) {
+				$after = $itemDAPConfig['field_for_urlsegment'];
+			} else if ($fields->dataFieldByName('MenuTitle')) {
 				$after = 'MenuTitle';
 			} else if ($fields->dataFieldByName('Title')) {
 				$after = 'Title';
