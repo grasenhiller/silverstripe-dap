@@ -17,13 +17,22 @@ class DAPExtension extends DataExtension {
 	];
 
 	public function onBeforeWrite() {
-		parent::onBeforeWrite();
-
 		$owner = $this->owner;
 		$itemDAPConfig = $owner->config()->get('dap_options');
+		$alwaysCreateNew = false;
 
-		if (isset($itemDAPConfig['field_for_urlsegment'])) {
+		if (
+			isset($itemDAPConfig['field_for_urlsegment'])
+			&& (
+				isset($owner->config()->get('db')[$itemDAPConfig['field_for_urlsegment']])
+				|| $owner->hasMethod($itemDAPConfig['field_for_urlsegment'])
+			)
+		) {
 			$fieldForURLSegment = $itemDAPConfig['field_for_urlsegment'];
+
+			if ($owner->hasMethod($fieldForURLSegment)) {
+				$alwaysCreateNew = true;
+			}
 		} else if (isset($owner->config()->get('db')['MenuTitle'])) {
 			$fieldForURLSegment = 'MenuTitle';
 		} else {
@@ -34,8 +43,15 @@ class DAPExtension extends DataExtension {
 			if (
 				!$owner->URLSegment
 				|| $owner->isChanged($fieldForURLSegment, 2)
+				|| $alwaysCreateNew
 			) {
-				$owner->URLSegment = $owner->dapGenerateURLSegment($owner->$fieldForURLSegment);
+				if ($alwaysCreateNew) {
+					$value = $owner->$fieldForURLSegment();
+				} else {
+					$value = $owner->$fieldForURLSegment;
+				}
+
+				$owner->URLSegment = $owner->dapGenerateURLSegment($value);
 			} else if ($owner->isChanged('URLSegment', 2)) {
 				$owner->URLSegment = $owner->dapGenerateURLSegment($owner->URLSegment);
 			}
@@ -119,10 +135,10 @@ class DAPExtension extends DataExtension {
 		$owner->validateDAPSettings();
 		$itemDAPConfig = $owner->config()->get('dap_options');
 
-		if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment') {
+		if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment' && isset($itemDAPConfig['show_urlsegment_field']) && $itemDAPConfig['show_urlsegment_field']) {
 			$after = '';
 
-			if (isset($itemDAPConfig['field_for_urlsegment'])) {
+			if (isset($itemDAPConfig['field_for_urlsegment']) && $fields->dataFieldByName($itemDAPConfig['field_for_urlsegment'])) {
 				$after = $itemDAPConfig['field_for_urlsegment'];
 			} else if ($fields->dataFieldByName('MenuTitle')) {
 				$after = 'MenuTitle';
@@ -131,11 +147,11 @@ class DAPExtension extends DataExtension {
 			}
 
 			$prefix = '';
-			
+
 			if ($owner->getDAPHolder() && $owner->getDAPHolder()->exists()) {
 				$prefix = $owner->getDAPHolder()->Link() . $itemDAPConfig['controller_action'] . '/';
 			}
-			
+
 			$fields->insertAfter(
 				$after,
 				SiteTreeURLSegmentField::create('URLSegment', 'URL-Segment')
@@ -158,7 +174,7 @@ class DAPExtension extends DataExtension {
 			throw new InvalidArgumentException('Please add at least the "id_or_urlsegment" and "controller_action" option for your data object "' . $itemClass . '"', E_USER_ERROR);
 		} else if ($itemDAPConfig['id_or_urlsegment'] != 'urlsegment' && $itemDAPConfig['id_or_urlsegment'] != 'id') {
 			throw new InvalidArgumentException('Please define "urlsegment" or "id" for the option "id_or_urlsegment" of your data object "' . $itemClass . '"', E_USER_ERROR);
-		}  else if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment' && !isset($owner->config()->get('db')['Title']) && !isset($owner->config()->get('db')['MenuTitle'])) {
+		}  else if ($itemDAPConfig['id_or_urlsegment'] == 'urlsegment' && !isset($owner->config()->get('db')['Title']) && !isset($owner->config()->get('db')['MenuTitle']) && !isset($itemDAPConfig['field_for_urlsegment'])) {
 			throw new InvalidArgumentException('You need an db field called "MenuTitle" or "Title" in order to create an urlsegment on your ' . $itemClass . '" class', E_USER_ERROR);
 		}
 	}

@@ -34,6 +34,7 @@ Grasenhiller\Intranet\Blog\Models\BlogCategory:
   dap_options:
     field_for_urlsegment: 'CustomTitle'
     id_or_urlsegment: 'urlsegment'
+    show_urlsegment_field: true
     controller_action: 'kategorie'
     template: 'MyCustomTemplate'
     breadcrumbs_max_depth: 20
@@ -45,12 +46,13 @@ Grasenhiller\Intranet\Blog\Models\BlogCategory:
 Inside your **controller** you need to define the name of the action you want to use and its value must be the class of the data objects you want to display.
 On the **data object** you need to define at least if you want to use the id or an urlsegment and the name of the controller action. **Optionally** you can define the following:
 
+- field_for_urlsegment
+- show_urlsegment_field
 - template
 - breadcrumbs_max_depth
 - breadcrumbs_unlinked
 - breadcrumbs_stop_at_pagetype
 - breadcrumbs_show_hidden
-- field_for_urlsegment
 
 #### 3. DataObject
 
