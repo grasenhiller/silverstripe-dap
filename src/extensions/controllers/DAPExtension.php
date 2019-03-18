@@ -29,14 +29,16 @@ class DAPExtension extends Extension {
 		$owner = $this->owner;
 		$r = $owner->request;
 
-		if (!$r->param('ID')) {
-			$dapActions = $owner->config()->get('dap_actions');
-			$urlSegment = $r->param('URLSegment');
+		$dapActions = $owner->config()->get('dap_actions');
+		$urlSegment = $r->param('URLSegment');
 
+		if (!$r->param('ID')) {
 			if (isset($dapActions[$urlSegment])) {
 				$owner->skip_dap_check = true;
 				$owner->config()->update('url_handlers', ['//$Action!' => 'dapShow']);
 			}
+		} else if ($urlSegment == $r->param('Action') && isset($dapActions[$urlSegment])) {
+			return $owner->redirect(str_replace($urlSegment . '/' . $urlSegment . '/', $urlSegment . '/', $r->getUrl()), 301);
 		}
 	}
 
