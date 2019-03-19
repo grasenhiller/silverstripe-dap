@@ -9,6 +9,7 @@ To help you get started, we want to display our ``BlogCategory`` object on to ou
 The outcome should be this page: ``domain.tld/my-blog/kategorie/tolle-kategorie-1``
 
 Your object needs either an ``MenuTitle`` or ``Title`` db field. If both are available, the ``MenuTitle`` will be used for the url segment generation.
+Alternatively you can define which field to use with ``field_for_urlsegment``;
 Also you need to define a ``canView()`` function onto your object.
 
 #### 1. Extension

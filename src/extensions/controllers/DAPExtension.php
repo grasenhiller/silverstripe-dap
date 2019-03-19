@@ -148,6 +148,14 @@ class DAPExtension extends Extension {
 
 				$data = array_merge($data, $additionalData);
 
+				if (
+					(!isset($data['Title'])
+					|| (isset($data['Title']) && !$data['Title']))
+					&& $item->hasMethod('getTitle')
+				) {
+					$data['Title'] = $item->getTitle();
+				}
+
 				if ($item->hasMethod('getDAPPageTitle')) {
 					$data['Title'] = $item->getDAPPageTitle();
 				}
