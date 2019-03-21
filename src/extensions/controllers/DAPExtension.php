@@ -38,7 +38,13 @@ class DAPExtension extends Extension {
 				$owner->config()->update('url_handlers', ['//$Action!' => 'dapShow']);
 			}
 		} else if ($urlSegment == $r->param('Action') && isset($dapActions[$urlSegment])) {
-			return $owner->redirect(str_replace($urlSegment . '/' . $urlSegment . '/', $urlSegment . '/', $r->getUrl()), 301);
+			if (count($r->getVars())) {
+				$queryString = '?' . http_build_query($r->getVars());
+			} else {
+				$queryString = null;
+			}
+
+			return $owner->redirect(str_replace($urlSegment . '/' . $urlSegment . '/', $urlSegment . '/', $r->getUrl()) . $queryString, 301);
 		}
 	}
 
