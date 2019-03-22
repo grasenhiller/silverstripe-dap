@@ -231,8 +231,9 @@ class DAPExtension extends Extension {
 
 		$page->ShowInMenus = true;
 		$page->MenuTitle = $page->Title;
-		$page->Parent = $this->owner;
+		$page->DAPParent = $this->owner;
 		$pages = [];
+		$i = 0;
 
 		while(
 			$page
@@ -242,7 +243,14 @@ class DAPExtension extends Extension {
 			if ($showHidden || $page->ShowInMenus) {
 				$pages[] = $page;
 			}
-			$page = $page->Parent;
+
+			if (!$i) {
+				$page = $page->DAPParent;
+			} else {
+				$page = $page->Parent;
+			}
+
+			$i++;
 		}
 
 		return ArrayList::create(array_reverse($pages));
