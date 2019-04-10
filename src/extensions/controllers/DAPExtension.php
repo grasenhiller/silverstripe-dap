@@ -33,7 +33,7 @@ class DAPExtension extends Extension {
 		$urlSegment = $r->param('URLSegment');
 
 		if (!$r->param('ID')) {
-			if (isset($dapActions[$urlSegment])) {
+			if (isset($dapActions['index'])) {
 				$owner->skip_dap_check = true;
 				$owner->config()->update('url_handlers', ['//$Action!' => 'dapShow']);
 			}
@@ -67,7 +67,7 @@ class DAPExtension extends Extension {
 
 			if ($owner->skip_dap_check) {
 				$url = $action;
-				$action = $r->param('URLSegment');
+				$action = 'index';
 			}
 
 			if (is_array($dapActions) && isset($dapActions[$action])) {
