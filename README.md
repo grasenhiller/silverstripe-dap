@@ -90,7 +90,7 @@ Your data object has now an ``URLSegment`` field and a ``Link()``, ``AbsoluteLin
 
 ## Links without "show-function" / direct links
 
-If you don't want to add an extra segment to your url like "kategorie" in our example, use "index" under ```Controller.dap_actions`` and ``Model.dap_options.controller_action``
+If you don't want to add an extra segment to your url like "kategorie" in our example, use "index" under ``Controller.dap_actions`` and ``Model.dap_options.controller_action``
 
 ## Extending
 
