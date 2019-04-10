@@ -114,7 +114,12 @@ class DAPExtension extends DataExtension {
 				$segment = $owner->ID;
 			}
 
-			return $holder->Link($itemDAPConfig['controller_action'] . '/' . $segment . '/' . $action);
+			$controllerAction = $itemDAPConfig['controller_action'];
+			if ($controllerAction == 'index') {
+				$controllerAction = null;
+			}
+
+			return $holder->Link($controllerAction . '/' . $segment . '/' . $action);
 		}
 	}
 
