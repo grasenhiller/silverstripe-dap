@@ -192,15 +192,27 @@ class DAPExtension extends DataExtension {
 			$ctrl = Controller::curr();
 			$r = $ctrl->getRequest();
 			$action = $ctrl->getAction();
+			$ctrlAction = $dapConfig['controller_action'];
+			$actionParam = $r->param('Action');
 
-			if ($action == 'dapShow' && $dapConfig['controller_action'] == $r->param('Action')) {
+			if ($ctrlAction == 'index') {
+				$actionParam = 'index';
+			}
+
+			if ($action == 'dapShow' && $ctrlAction == $actionParam) {
+				if ($actionParam == 'index') {
+					$param = $r->param('Action');
+				} else {
+					$param = $r->param('ID');
+				}
+
 				if ($dapConfig['id_or_urlsegment'] == 'urlsegment') {
 					$field = 'URLSegment';
 				} else if ($dapConfig['id_or_urlsegment'] == 'id') {
 					$field = 'ID';
 				}
 
-				if ($owner->$field == $r->param('ID')) {
+				if ($owner->$field == $param) {
 					return 'current';
 				}
 			}
