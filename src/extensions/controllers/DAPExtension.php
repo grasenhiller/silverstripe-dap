@@ -184,23 +184,23 @@ class DAPExtension extends Extension {
 			}
 		} else {
 			$r = $this->owner->request;
-			$action = $r->param('Action');
-			$directMethod = $this->owner->hasMethod($action);
+			$action = false;
+			$directMethod = $this->owner->hasMethod($r->param('Action'));
 
 			if (!$directMethod) {
 				$handlers = $this->owner->config()->get('url_handlers');
 				unset($handlers['$Action'], $handlers['$Action//$ID/$OtherID'], $handlers['//$Action!/$ID!']);
 
 				foreach ($handlers as $handler => $actionName) {
-					if (strpos($handler, $action) === 0) {
+					if (strpos($handler, $r->param('Action')) === 0) {
 						if ($this->owner->hasMethod($actionName)) {
 							$action = $actionName;
 							break;
 						}
 					}
-
-					$action = false;
 				}
+			} else {
+				$action = $r->param('Action');
 			}
 
 			if ($action) {
