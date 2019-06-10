@@ -14,7 +14,6 @@ use SilverStripe\View\SSViewer;
 class DAPExtension extends Extension {
 
 	protected $dap_config;
-	protected $dap_action;
 	protected $skip_dap_check = false;
 
 	private static $allowed_actions = [
@@ -184,8 +183,27 @@ class DAPExtension extends Extension {
 				return Security::permissionFailure();
 			}
 		} else {
-			if ($this->owner->hasMethod($this->dap_action)) {
-				$action = $this->dap_action;
+			$r = $this->owner->request;
+			$action = $r->param('Action');
+			$directMethod = $this->owner->hasMethod($action);
+
+			if (!$directMethod) {
+				$handlers = $this->owner->config()->get('url_handlers');
+				unset($handlers['$Action'], $handlers['$Action//$ID/$OtherID'], $handlers['//$Action!/$ID!']);
+
+				foreach ($handlers as $handler => $actionName) {
+					if (strpos($handler, $action) === 0) {
+						if ($this->owner->hasMethod($actionName)) {
+							$action = $actionName;
+							break;
+						}
+					}
+
+					$action = false;
+				}
+			}
+
+			if ($action) {
 				return $this->owner->$action();
 			} else {
 				return $this->owner->httpError(404);
