@@ -86,7 +86,7 @@ DB Fields are accessible like regular. To get relations and other methods use ``
 
 ## Methods and fields added
 
-Your data object has now an ``URLSegment`` field and a ``Link()``, ``AbsoluteLink()`` and ``DAPLinkingMode()`` method.
+Your data object has now an ``URLSegment`` field and a ``DAPItemCanEdit``, ``Link()``, ``AbsoluteLink()`` and ``DAPLinkingMode()`` method.
 
 ## Links without "show-function" / direct links
 
