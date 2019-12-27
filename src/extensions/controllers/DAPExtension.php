@@ -144,6 +144,7 @@ class DAPExtension extends Extension {
 					'Parent' => $parent,
 					'ClassNameForTemplate' => self::get_classname_for_template($item),
 					'DAPItem' => $item,
+					'DAPItemCanEdit' => $item->canEdit(),
 					'Breadcrumbs' => $this->getDAPBreadcrumbs($maxDepth, $unlinked, $stopAtPageType, $showHidden)
 				];
 
